@@ -114,9 +114,38 @@ class MatomoKafkaSupportRequestProcessor extends Tracker\RequestProcessor
     {
         // empty
         $txt = "For Kafka - ".$request->getParam('action_name')."-".$request->getParam('e_c')."-".$request->getParam('e_a');
+
+        // Use specifc request data
         $myfile = file_put_contents('./logs.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
+
+        // Use All request data
         $myfile = file_put_contents('./logs1.txt', json_encode($request->getParams())."\n".PHP_EOL , FILE_APPEND | LOCK_EX);
         //print_r($request->getParams());
+
+
+        // Send captured data to Kafka using Curl Request
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL,"http://localhost:8080/kafka/kafka.php");
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($request->getParams()));
+
+        // SSL Fix
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        // Receive server response ...
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        
+        $server_output = curl_exec($ch);
+
+        curl_close($ch);
+
+        $myfile = file_put_contents('./logs0.txt', $server_output.PHP_EOL , FILE_APPEND | LOCK_EX); 
+
+        // Further processing ...
+        if ($server_output == "OK") { 
+            
+        }else { 
+        }
     }
 
 }
