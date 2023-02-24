@@ -2,9 +2,7 @@
   "name": "MatomoKafkaSupport",
   "description": "This plugin developed to add some additional support for Kafka",
   "version": "0.1.0",
-  "require": {
-    "matomo": ">=4.0.0-b1,<5.0.0-b1"
-  },
+  "require": {},
   "authors": [
         {
             "name": "Kunal Patil",
@@ -17,8 +15,8 @@
         "issues": "",
         "forum": "",
         "irc": "",
-        "wiki": "",
-        "source": "",
+        "wiki": "https://github.com/kunalpatil24/MatomoKafkaSupport/wiki",
+        "source": "https://github.com/kunalpatil24/MatomoKafkaSupport",
         "docs": "",
         "rss": ""
     },
