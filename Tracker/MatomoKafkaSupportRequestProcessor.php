@@ -10,6 +10,12 @@ use Piwik\Tracker;
 use Piwik\Tracker\Visit\VisitProperties;
 
 
+use RdKafka\Conf;
+use RdKafka\Message;
+use RdKafka\Producer;
+use RdKafka\TopicConf;
+
+
 
 class MatomoKafkaSupportRequestProcessor extends Tracker\RequestProcessor
 {
@@ -116,13 +122,13 @@ class MatomoKafkaSupportRequestProcessor extends Tracker\RequestProcessor
         $txt = "For Kafka - ".$request->getParam('action_name')."-".$request->getParam('e_c')."-".$request->getParam('e_a');
 
         // Use specifc request data
-        $myfile = file_put_contents('./logs.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
+        //$myfile = file_put_contents('./logs.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
 
         // Use All request data
-        $myfile = file_put_contents('./logs1.txt', json_encode($request->getParams())."\n".PHP_EOL , FILE_APPEND | LOCK_EX);
+        $myfile = file_put_contents('./matomo_kafka_logs.txt', json_encode($request->getParams())."\n".PHP_EOL , FILE_APPEND | LOCK_EX);
         //print_r($request->getParams());
 
-
+        /*
         // Send captured data to Kafka using Curl Request
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL,"http://localhost:8080/kafka/kafka.php");
@@ -146,6 +152,55 @@ class MatomoKafkaSupportRequestProcessor extends Tracker\RequestProcessor
             
         }else { 
         }
+
+        */
+
+        // Send Message to Kafka - Produser
+        $conf = new Conf();
+        $conf->set('bootstrap.servers', 'your-kafka:9092');
+        $conf->set('socket.timeout.ms', (string) 50);
+        $conf->set('queue.buffering.max.messages', (string) 1000);
+        $conf->set('max.in.flight.requests.per.connection', (string) 1);
+        $conf->setDrMsgCb(
+            function (Producer $producer, Message $message): void {
+                if ($message->err !== RD_KAFKA_RESP_ERR_NO_ERROR) {
+                    //var_dump($message->errstr());
+                } else {
+                    //echo "success";
+                }
+                var_dump($message);
+            }
+        );
+        //$conf->set('log_level', (string) LOG_DEBUG);
+        //$conf->set('debug', 'all');
+        $conf->setLogCb(
+            function (Producer $producer, int $level, string $facility, string $message): void {
+                //echo sprintf('log: %d %s %s', $level, $facility, $message) . PHP_EOL;
+            }
+        );
+        $conf->set('statistics.interval.ms', (string) 1000);
+        $conf->setStatsCb(
+            function (Producer $producer, string $json, int $json_len, $opaque = null): void {
+                //echo "stats: {$json}" . PHP_EOL;
+            }
+        );
+
+        $topicConf = new TopicConf();
+        $topicConf->set('message.timeout.ms', (string) 30000);
+        $topicConf->set('request.required.acks', (string) -1);
+        $topicConf->set('request.timeout.ms', (string) 5000);
+        $producer = new Producer($conf);
+        $topic = $producer->newTopic('your-topic-name', $topicConf);
+        $metadata = $producer->getMetadata(false, $topic, 1000);
+        $key = 100;
+        //$payload = sprintf('Real Test matomo to KAFKA message');
+        $payload = json_encode($request->getParams());
+        //echo sprintf('produce msg: %s', $payload) . PHP_EOL;
+        $topic->produce(RD_KAFKA_PARTITION_UA, 0, $payload, (string) $key);
+        // triggers log output
+        $events = $producer->poll(1);
+        $producer->flush(5000);
+
     }
 
 }
