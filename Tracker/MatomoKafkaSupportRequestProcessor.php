@@ -157,7 +157,7 @@ class MatomoKafkaSupportRequestProcessor extends Tracker\RequestProcessor
 
         // Send Message to Kafka - Produser
         $conf = new Conf();
-        $conf->set('bootstrap.servers', 'your-kafka:9092');
+        $conf->set('bootstrap.servers', 'your-kafka:9092'); // configure/update your correct brokers list here
         $conf->set('socket.timeout.ms', (string) 50);
         $conf->set('queue.buffering.max.messages', (string) 1000);
         $conf->set('max.in.flight.requests.per.connection', (string) 1);
@@ -190,7 +190,7 @@ class MatomoKafkaSupportRequestProcessor extends Tracker\RequestProcessor
         $topicConf->set('request.required.acks', (string) -1);
         $topicConf->set('request.timeout.ms', (string) 5000);
         $producer = new Producer($conf);
-        $topic = $producer->newTopic('your-topic-name', $topicConf);
+        $topic = $producer->newTopic('your-topic-name', $topicConf); // configure/update your correct topic name
         $metadata = $producer->getMetadata(false, $topic, 1000);
         $key = 100;
         //$payload = sprintf('Real Test matomo to KAFKA message');
